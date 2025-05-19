@@ -3,9 +3,10 @@ package runner
 import (
 	"bytes"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func Run(lang Lang, code string) (stdoutStr string, stderrStr string, err error) {
@@ -37,6 +38,7 @@ func Run(lang Lang, code string) (stdoutStr string, stderrStr string, err error)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	// TODO: pull images on init
 	err = cmd.Run()
 
 	return stdout.String(), stderr.String(), err

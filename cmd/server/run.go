@@ -3,8 +3,9 @@ package main
 import (
 	"codeexec/internal/runner"
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const maxMemory = 10 * 1024 * 1024 // 10MB
@@ -18,7 +19,7 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	lang := runner.Lang(r.FormValue("language"))
 	code := r.FormValue("code")
 
-	log.Infof("Language: %s\nCode:\n%s\n", lang, code)
+	log.Infof("\nLanguage: %s\nCode:\n%s\n", lang, code)
 
 	stdout, stderr, err := runner.Run(lang, code)
 	w.Header().Set("Content-Type", "application/json")
