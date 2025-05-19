@@ -73,14 +73,10 @@
           runBtn.textContent = "Running...";
           const form = e.target;
           const data = new FormData(form);
-          const params = new URLSearchParams();
-          for (const pair of data) {
-            params.append(pair[0], pair[1]);
-          }
           const resp = await fetch("/run", {
             method: "POST",
             headers: { Accept: "application/json" },
-            body: params,
+            body: data,
           });
           const result = await resp.json();
           document.getElementById("stdout").textContent = result.stdout || "";

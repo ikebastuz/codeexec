@@ -7,9 +7,11 @@ import (
 	"net/http"
 )
 
+const maxMemory = 10 * 1024 * 1024 // 10MB
+
 func runHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+	if err := r.ParseMultipartForm(maxMemory); err != nil {
+		http.Error(w, "invalid multipart form", http.StatusBadRequest)
 		return
 	}
 
