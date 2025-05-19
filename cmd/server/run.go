@@ -2,7 +2,7 @@ package main
 
 import (
 	"codeexec/internal/runner"
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 )
@@ -18,11 +18,14 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Language: %s\nCode:\n%s\n", lang, code)
 
-	out, err := runner.Run(lang, code)
-	if err != nil {
-		fmt.Printf("Error: %s\n", err)
-		w.Write([]byte(err.Error()))
-		return
+	stdout, stderr, err := runner.Run(lang, code)
+	w.Header().Set("Content-Type", "application/json")
+	resp := map[string]string{
+		"stdout": stdout,
+		"stderr": stderr,
 	}
-	w.Write([]byte(out))
+	if err != nil {
+		resp["error"] = err.Error()
+	}
+	json.NewEncoder(w).Encode(resp)
 }

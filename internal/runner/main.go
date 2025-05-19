@@ -7,21 +7,21 @@ import (
 	"os/exec"
 )
 
-func Run(lang Lang, code string) (output string, err error) {
+func Run(lang Lang, code string) (stdoutStr string, stderrStr string, err error) {
 	var lg, ok = langDefinition[lang]
 	if !ok {
-		return "", fmt.Errorf("unknown language: %s", lang)
+		return "", "", fmt.Errorf("unknown language: %s", lang)
 	}
 
 	// File
 	tmpFile, err := os.CreateTemp("", "tmp-*")
 	if err != nil {
-		return "", fmt.Errorf("failed to create temp file: %s", err)
+		return "", "", fmt.Errorf("failed to create temp file: %s", err)
 	}
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 	if _, err := tmpFile.WriteString(code); err != nil {
-		return "", fmt.Errorf("failed to write code to temp file: %s", err)
+		return "", "", fmt.Errorf("failed to write code to temp file: %s", err)
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -36,10 +36,5 @@ func Run(lang Lang, code string) (output string, err error) {
 
 	err = cmd.Run()
 
-	if err != nil {
-		fmt.Println("cmd error: ", err)
-		return "", fmt.Errorf("stderr: %s", stderr.String())
-	}
-
-	return stdout.String(), nil
+	return stdout.String(), stderr.String(), err
 }
