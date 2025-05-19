@@ -6,21 +6,24 @@ const (
 	LANG_PYTHON     Lang = "python"
 )
 
-const MAIN_EXEC_FILE string = "/app/main"
+const WORKDIR = "/app"
+const EXEC_FILE = "main"
 
 var langDefinition = map[Lang]LangDefinition{
-	// TODO: handle adding go.mod
 	LANG_GO: {
 		image:   "golang:1.21-alpine",
 		command: []string{"go", "run"},
+		ext:     "go",
 	},
 	LANG_JAVASCRIPT: {
 		image:   "node:20-alpine",
 		command: []string{"node"},
+		ext:     "js",
 	},
 	LANG_PYTHON: {
 		image:   "python:3.11-alpine",
 		command: []string{"python3"},
+		ext:     "py",
 	},
 }
 
