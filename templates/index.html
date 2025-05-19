@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Go Code Exec</title>
+</head>
+<body>
+  <h1>Run Code</h1>
+  <form action="/run" method="POST">
+    <label for="language">Language:</label>
+    <select name="language" id="language">
+      {{range .Languages}}
+        <option value="{{.}}">{{.}}</option>
+      {{end}}
+    </select>
+    <br><br>
+    <label for="code">Code:</label><br>
+    <textarea name="code" id="code" rows="15" cols="80"></textarea>
+    <br><br>
+    <button type="submit">Run</button>
+  </form>
+</body>
+</html>
+

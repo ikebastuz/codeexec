@@ -9,6 +9,7 @@ const (
 const MAIN_EXEC_FILE string = "/app/main"
 
 var langDefinition = map[Lang]LangDefinition{
+	// TODO: handle adding go.mod
 	LANG_GO: {
 		image:   "golang:1.21-alpine",
 		command: []string{"go", "run"},
@@ -21,4 +22,12 @@ var langDefinition = map[Lang]LangDefinition{
 		image:   "python:3.11-alpine",
 		command: []string{"python3"},
 	},
+}
+
+func GetLangs() []string {
+	var languages []string
+	for k := range langDefinition {
+		languages = append(languages, string(k))
+	}
+	return languages
 }

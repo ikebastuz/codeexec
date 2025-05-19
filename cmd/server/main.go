@@ -1,14 +1,15 @@
 package main
 
 import (
-	"codeexec/internal/runner"
-	"fmt"
+	"log"
+	"net/http"
 )
 
+const PORT = ":1450"
+
 func main() {
-	out, err := runner.Run("javascript", "var a = 1;\nvar b = 2;\nconsole.log(a+b);")
-	if err != nil {
-		fmt.Printf("Error: %s\n", err)
-	}
-	fmt.Printf("Output: %s\n", out)
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/run", runHandler)
+	log.Printf("Server on %s", PORT)
+	log.Fatal(http.ListenAndServe(PORT, nil))
 }
