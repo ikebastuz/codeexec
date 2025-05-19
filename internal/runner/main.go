@@ -3,6 +3,7 @@ package runner
 import (
 	"bytes"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 )
@@ -30,7 +31,8 @@ func Run(lang Lang, code string) (stdoutStr string, stderrStr string, err error)
 	command = append(command, lg.command...)
 	command = append(command, execFile(lg.ext))
 
-	fmt.Printf("command: docker %s\n", command)
+	log.Infof("Executing: docker %s\n", command)
+
 	cmd := exec.Command("docker", command...)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

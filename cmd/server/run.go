@@ -3,7 +3,7 @@ package main
 import (
 	"codeexec/internal/runner"
 	"encoding/json"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -18,7 +18,7 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	lang := runner.Lang(r.FormValue("language"))
 	code := r.FormValue("code")
 
-	log.Printf("Language: %s\nCode:\n%s\n", lang, code)
+	log.Infof("Language: %s\nCode:\n%s\n", lang, code)
 
 	stdout, stderr, err := runner.Run(lang, code)
 	w.Header().Set("Content-Type", "application/json")
@@ -26,7 +26,9 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 		"stdout": stdout,
 		"stderr": stderr,
 	}
+	log.Infof("\nstdout:\n%s\nstderr:\n%s\n", stdout, stderr)
 	if err != nil {
+		log.Errorf("Response error: %s", err)
 		resp["error"] = err.Error()
 	}
 	json.NewEncoder(w).Encode(resp)
