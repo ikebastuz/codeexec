@@ -2,6 +2,7 @@ package main
 
 import (
 	"codeexec/internal/config"
+	"codeexec/internal/metrics"
 	"codeexec/internal/runner"
 	"encoding/json"
 	"net/http"
@@ -33,6 +34,9 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 		"stderr":   stderr,
 		"duration": duration,
 	}
+	metrics.ExecutionsCounter.WithLabelValues(string(lang)).Inc()
+	metrics.ExecutionsDuration.WithLabelValues(string(lang)).Observe(duration)
+
 	if err != nil {
 		log.Errorf("Response error: %s", err)
 		resp["error"] = err.Error()

@@ -3,7 +3,10 @@ package main
 import (
 	"net/http"
 
+	"codeexec/internal/metrics"
 	"codeexec/internal/runner"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -18,10 +21,13 @@ func main() {
 		ForceColors:   true,
 	})
 
+	metrics.InitMetrics()
 	runner.PullAllImages()
 
-	http.HandleFunc("/", indexHandler)
+	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/run", runHandler)
+	http.HandleFunc("/", indexHandler)
+
 	log.Infof("Server on %s", PORT)
 	log.Fatal(http.ListenAndServe(PORT, nil))
 }

@@ -51,6 +51,7 @@ func Run(lang Lang, code string) (string, string, float64, error) {
 	duration := time.Since(start).Seconds()
 
 	if ctx.Err() == context.DeadlineExceeded {
+		log.Errorf("Timeout exceeded: %s", ctx.Err())
 		return "", "", duration, errors.New("timeout exceeded")
 	}
 	return stdout.String(), stderr.String(), duration, err

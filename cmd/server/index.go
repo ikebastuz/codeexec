@@ -1,6 +1,7 @@
 package main
 
 import (
+	"codeexec/internal/metrics"
 	"codeexec/internal/runner"
 	"encoding/json"
 	"html/template"
@@ -34,5 +35,8 @@ func init() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/" {
+		metrics.IndexPageCounter.Inc()
+	}
 	tmpl.Execute(w, pageData)
 }
