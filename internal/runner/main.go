@@ -2,6 +2,7 @@ package runner
 
 import (
 	"bytes"
+	"codeexec/internal/config"
 	"context"
 	"errors"
 	"fmt"
@@ -38,7 +39,7 @@ func Run(lang Lang, code string) (string, string, error) {
 
 	log.Infof("Executing: docker %s\n", command)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.PROCESS_TIMEOUT*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "docker", command...)

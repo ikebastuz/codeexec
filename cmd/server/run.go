@@ -1,6 +1,7 @@
 package main
 
 import (
+	"codeexec/internal/config"
 	"codeexec/internal/runner"
 	"encoding/json"
 	"net/http"
@@ -8,13 +9,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const MAX_MEMORY = 10 * 1024 * 1024 // 10MB
-const MAX_PROCESSES = 5
-
-var semaphore = make(chan struct{}, MAX_PROCESSES)
+var semaphore = make(chan struct{}, config.MAX_PROCESSES)
 
 func runHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(MAX_MEMORY); err != nil {
+	if err := r.ParseMultipartForm(config.MAX_MEMORY); err != nil {
 		http.Error(w, "invalid multipart form", http.StatusBadRequest)
 		return
 	}
