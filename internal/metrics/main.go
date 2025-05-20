@@ -29,6 +29,22 @@ var (
 			Help: "Total number of index page served",
 		},
 	)
+
+	StdErrCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "codeexec_stderr_total",
+			Help: "Total number of stderr",
+		},
+		[]string{"language"},
+	)
+
+	ErrorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "codeexec_error_total",
+			Help: "Total number of errors",
+		},
+		[]string{"language"},
+	)
 )
 
 func InitMetrics() {
@@ -36,4 +52,6 @@ func InitMetrics() {
 	prometheus.MustRegister(ExecutionsCounter)
 	prometheus.MustRegister(ExecutionsDuration)
 	prometheus.MustRegister(IndexPageCounter)
+	prometheus.MustRegister(StdErrCounter)
+	prometheus.MustRegister(ErrorCounter)
 }

@@ -29,7 +29,8 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	stdout, stderr, duration, err := runner.Run(lang, code)
 
 	w.Header().Set("Content-Type", "application/json")
-	resp := map[string]interface{}{
+	// TODO: type cover
+	resp := map[string]any{
 		"stdout":   stdout,
 		"stderr":   stderr,
 		"duration": duration,
@@ -37,7 +38,12 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	metrics.ExecutionsCounter.WithLabelValues(string(lang)).Inc()
 	metrics.ExecutionsDuration.WithLabelValues(string(lang)).Observe(duration)
 
+	if stderr != "" {
+		metrics.StdErrCounter.WithLabelValues(string(lang)).Inc()
+	}
+
 	if err != nil {
+		metrics.ErrorCounter.WithLabelValues(string(lang)).Inc()
 		log.Errorf("Response error: %s", err)
 		resp["error"] = err.Error()
 	}

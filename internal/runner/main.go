@@ -48,6 +48,7 @@ func Run(lang Lang, code string) (string, string, float64, error) {
 
 	start := time.Now()
 	err = cmd.Run()
+	// TODO: calculate duration only for execution if there is a build step
 	duration := time.Since(start).Seconds()
 
 	if ctx.Err() == context.DeadlineExceeded {
