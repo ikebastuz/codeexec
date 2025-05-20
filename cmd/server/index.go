@@ -5,26 +5,34 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var tmpl = template.Must(template.ParseFiles("templates/index.html"))
+var pageData PageData
 
 type PageData struct {
 	Languages     []string
-	SampleCodeMap string
+	SampleCodeMap string // JSON string [lang:sampleCode]
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	langs := []string{}
+func init() {
+	langs := runner.GetLangs()
 	sampleCodeMap := make(map[string]string)
 	for lang, def := range runner.LangDefinitions {
-		langs = append(langs, string(lang))
 		sampleCodeMap[string(lang)] = def.SampleCode
 	}
-	sampleCodeJSON, _ := json.Marshal(sampleCodeMap)
-	data := PageData{
+	sampleCodeJSON, err := json.Marshal(sampleCodeMap)
+	if err != nil {
+		log.Fatalf("Failed to marshal sample code map: %v", err)
+	}
+	pageData = PageData{
 		Languages:     langs,
 		SampleCodeMap: string(sampleCodeJSON),
 	}
-	tmpl.Execute(w, data)
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl.Execute(w, pageData)
 }
