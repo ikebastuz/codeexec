@@ -27,10 +27,10 @@ func Run(lang Lang, code string) (stdoutStr string, stderrStr string, err error)
 	}
 
 	var stdout, stderr bytes.Buffer
-	var command = []string{"run", "--rm", "-v", fmt.Sprintf("%s:%s", tmpFile.Name(), execFile(lg.ext))}
+	var command = []string{"run", "--rm", "-v", fmt.Sprintf("%s:%s", tmpFile.Name(), execFile(lg.fileName))}
 	command = append(command, lg.image)
 	command = append(command, lg.command...)
-	command = append(command, execFile(lg.ext))
+	command = append(command, execFile(lg.fileName))
 
 	log.Infof("Executing: docker %s\n", command)
 
@@ -44,10 +44,6 @@ func Run(lang Lang, code string) (stdoutStr string, stderrStr string, err error)
 	return stdout.String(), stderr.String(), err
 }
 
-func execFile(ext string) string {
-	return fmt.Sprintf("%s/%s", WORKDIR, execName(ext))
-}
-
-func execName(ext string) string {
-	return fmt.Sprintf("%s.%s", EXEC_FILE, ext)
+func execFile(fileName string) string {
+	return fmt.Sprintf("%s/%s", WORKDIR, fileName)
 }
