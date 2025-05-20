@@ -10,6 +10,8 @@ import (
 
 const maxMemory = 10 * 1024 * 1024 // 10MB
 
+var dockerSemaphore = make(chan struct{}, 5)
+
 func runHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(maxMemory); err != nil {
 		http.Error(w, "invalid multipart form", http.StatusBadRequest)
@@ -21,8 +23,12 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Infof("\nLanguage: %s\nCode:\n%s\n", lang, code)
 
+	dockerSemaphore <- struct{}{}
 	c := make(chan runner.Job)
-	go runner.Run(lang, code, c)
+	go func() {
+		defer func() { <-dockerSemaphore }() // Release the slot when done
+		runner.Run(lang, code, c)
+	}()
 	res := <-c
 
 	w.Header().Set("Content-Type", "application/json")

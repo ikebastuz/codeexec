@@ -55,13 +55,11 @@ func Run(lang Lang, code string, c chan Job) {
 	// TODO: pull images on init
 	err = cmd.Run()
 
-	log.Infof("Returning channel")
 	c <- Job{
 		Stdout: stdout.String(),
 		Stderr: stderr.String(),
 		Error:  err,
 	}
-	log.Infof("Returning function")
 }
 
 func execFile(fileName string) string {
