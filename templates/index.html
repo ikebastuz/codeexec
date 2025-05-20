@@ -42,7 +42,14 @@
         </div>
       </form>
       <div id="output-section" class="mt-8">
-        <h2 class="text-xl font-semibold mb-2 text-center">Output</h2>
+        <div class="flex items-center justify-center mb-2">
+          <h2 class="text-xl font-semibold text-center mr-3">Output</h2>
+          <span
+            id="duration"
+            class="text-xs text-gray-500 bg-gray-200 rounded px-2 py-1"
+            style="display: none"
+          ></span>
+        </div>
         <div class="mb-4">
           <label class="block font-medium mb-1 text-green-700">Stdout:</label>
           <pre
@@ -69,6 +76,7 @@
       const languageSelect = document.getElementById("language");
       const codeTextarea = document.getElementById("code");
       const runBtn = document.getElementById("run-btn");
+      const durationElem = document.getElementById("duration");
 
       function setSampleCode() {
         const lang = languageSelect.value;
@@ -97,6 +105,14 @@
           document.getElementById("stderr").textContent = result.stderr || "";
           document.getElementById("error-section").textContent =
             result.error || "";
+
+          if (typeof result.duration === "number") {
+            durationElem.textContent = `${result.duration.toFixed(2)}s`;
+            durationElem.style.display = "inline-block";
+          } else {
+            durationElem.textContent = "";
+            durationElem.style.display = "none";
+          }
           runBtn.disabled = false;
           runBtn.textContent = "Run";
         });

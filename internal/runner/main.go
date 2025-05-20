@@ -14,21 +14,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Run(lang Lang, code string) (string, string, error) {
+func Run(lang Lang, code string) (string, string, float64, error) {
 	var lg, ok = LangDefinitions[lang]
 	if !ok {
-		return "", "", fmt.Errorf("unknown language: %s", lang)
+		return "", "", 0, fmt.Errorf("unknown language: %s", lang)
 	}
 
 	// File
 	tmpFile, err := os.CreateTemp("", "tmp-*")
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create temp file: %s", err)
+		return "", "", 0, fmt.Errorf("failed to create temp file: %s", err)
 	}
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 	if _, err := tmpFile.WriteString(code); err != nil {
-		return "", "", fmt.Errorf("failed to write code to temp file: %s", err)
+		return "", "", 0, fmt.Errorf("failed to write code to temp file: %s", err)
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -46,12 +46,14 @@ func Run(lang Lang, code string) (string, string, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	start := time.Now()
 	err = cmd.Run()
+	duration := time.Since(start).Seconds()
 
 	if ctx.Err() == context.DeadlineExceeded {
-		return "", "", errors.New("timeout exceeded")
+		return "", "", duration, errors.New("timeout exceeded")
 	}
-	return stdout.String(), stderr.String(), err
+	return stdout.String(), stderr.String(), duration, err
 }
 
 func execFile(fileName string) string {

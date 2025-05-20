@@ -25,12 +25,13 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	semaphore <- struct{}{}
 	defer func() { <-semaphore }()
 
-	stdout, stderr, err := runner.Run(lang, code)
+	stdout, stderr, duration, err := runner.Run(lang, code)
 
 	w.Header().Set("Content-Type", "application/json")
-	resp := map[string]string{
-		"stdout": stdout,
-		"stderr": stderr,
+	resp := map[string]interface{}{
+		"stdout":   stdout,
+		"stderr":   stderr,
+		"duration": duration,
 	}
 	if err != nil {
 		log.Errorf("Response error: %s", err)
