@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -20,6 +21,6 @@ func GetConfig() (*Config, error) {
 	}
 
 	return &Config{
-		PORT: port,
+		PORT: fmt.Sprintf(":%s", port),
 	}, nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"codeexec/internal/metrics"
 	"codeexec/internal/runner"
+	"embed"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -10,7 +11,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var tmpl = template.Must(template.ParseFiles("templates/index.html"))
+//go:embed templates/index.html
+var indexHtmlFS embed.FS
+
+var tmpl = template.Must(template.ParseFS(indexHtmlFS, "templates/index.html"))
 var pageData PageData
 
 type PageData struct {
