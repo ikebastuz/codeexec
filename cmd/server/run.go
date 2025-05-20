@@ -21,16 +21,19 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Infof("\nLanguage: %s\nCode:\n%s\n", lang, code)
 
-	stdout, stderr, err := runner.Run(lang, code)
+	c := make(chan runner.Job)
+	go runner.Run(lang, code, c)
+	res := <-c
+
 	w.Header().Set("Content-Type", "application/json")
 	resp := map[string]string{
-		"stdout": stdout,
-		"stderr": stderr,
+		"stdout": res.Stdout,
+		"stderr": res.Stderr,
 	}
-	log.Infof("\nstdout:\n%s\nstderr:\n%s\n", stdout, stderr)
-	if err != nil {
-		log.Errorf("Response error: %s", err)
-		resp["error"] = err.Error()
+	log.Infof("\nstdout:\n%s\nstderr:\n%s\n", res.Stdout, res.Stderr)
+	if res.Error != nil {
+		log.Errorf("Response error: %s", res.Error)
+		resp["error"] = res.Error.Error()
 	}
 	json.NewEncoder(w).Encode(resp)
 }

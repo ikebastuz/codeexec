@@ -9,21 +9,35 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Run(lang Lang, code string) (stdoutStr string, stderrStr string, err error) {
+func Run(lang Lang, code string, c chan Job) {
 	var lg, ok = langDefinition[lang]
 	if !ok {
-		return "", "", fmt.Errorf("unknown language: %s", lang)
+		c <- Job{
+			Stdout: "",
+			Stderr: "",
+			Error:  fmt.Errorf("unknown language: %s", lang),
+		}
+		return
 	}
 
 	// File
 	tmpFile, err := os.CreateTemp("", "tmp-*")
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create temp file: %s", err)
+		c <- Job{
+			Stdout: "",
+			Stderr: "",
+			Error:  fmt.Errorf("failed to create temp file: %s", err),
+		}
+		return
 	}
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 	if _, err := tmpFile.WriteString(code); err != nil {
-		return "", "", fmt.Errorf("failed to write code to temp file: %s", err)
+		c <- Job{
+			Stdout: "",
+			Stderr: "",
+			Error:  fmt.Errorf("failed to write code to temp file: %s", err),
+		}
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -41,7 +55,13 @@ func Run(lang Lang, code string) (stdoutStr string, stderrStr string, err error)
 	// TODO: pull images on init
 	err = cmd.Run()
 
-	return stdout.String(), stderr.String(), err
+	log.Infof("Returning channel")
+	c <- Job{
+		Stdout: stdout.String(),
+		Stderr: stderr.String(),
+		Error:  err,
+	}
+	log.Infof("Returning function")
 }
 
 func execFile(fileName string) string {

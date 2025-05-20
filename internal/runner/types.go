@@ -7,3 +7,9 @@ type LangDefinition struct {
 	command  []string
 	fileName string
 }
+
+type Job struct {
+	Stdout string
+	Stderr string
+	Error  error
+}
