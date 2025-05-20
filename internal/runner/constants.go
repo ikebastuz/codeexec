@@ -7,6 +7,7 @@ const (
 	LANG_RUBY       Lang = "ruby"
 	LANG_RUST       Lang = "rust"
 	LANG_PHP        Lang = "php"
+	LANG_JAVA       Lang = "java"
 )
 
 const WORKDIR = "/app"
@@ -41,6 +42,11 @@ var langDefinition = map[Lang]LangDefinition{
 		image:    "php:8.3-cli-alpine",
 		command:  []string{"php"},
 		fileName: "main.php",
+	},
+	LANG_JAVA: {
+		image:    "openjdk:21-slim",
+		command:  []string{"sh", "-c", "javac /app/Main.java && java -cp /app Main"},
+		fileName: "Main.java",
 	},
 }
 
