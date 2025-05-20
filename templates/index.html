@@ -64,7 +64,21 @@
       </div>
     </div>
     <script>
+      window.sampleCodeMap = JSON.parse("{{ .SampleCodeMap }}");
+
+      const languageSelect = document.getElementById("language");
+      const codeTextarea = document.getElementById("code");
       const runBtn = document.getElementById("run-btn");
+
+      function setSampleCode() {
+        const lang = languageSelect.value;
+        if (window.sampleCodeMap[lang]) {
+          codeTextarea.value = window.sampleCodeMap[lang];
+        } else {
+          codeTextarea.value = "";
+        }
+      }
+
       document
         .getElementById("code-form")
         .addEventListener("submit", async function (e) {
@@ -86,6 +100,9 @@
           runBtn.disabled = false;
           runBtn.textContent = "Run";
         });
+
+      languageSelect.addEventListener("change", setSampleCode);
+      setSampleCode();
     </script>
   </body>
 </html>

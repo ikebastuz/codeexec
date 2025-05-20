@@ -11,7 +11,7 @@ import (
 )
 
 func Run(lang Lang, code string) (string, string, error) {
-	var lg, ok = langDefinition[lang]
+	var lg, ok = LangDefinitions[lang]
 	if !ok {
 		return "", "", fmt.Errorf("unknown language: %s", lang)
 	}
@@ -52,7 +52,7 @@ func execFile(fileName string) string {
 func PullAllImages() {
 	var wg sync.WaitGroup
 
-	for _, def := range langDefinition {
+	for _, def := range LangDefinitions {
 		image := def.image
 		wg.Add(1)
 		go func(img string) {
