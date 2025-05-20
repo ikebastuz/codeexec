@@ -2,10 +2,13 @@ package runner
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -35,13 +38,18 @@ func Run(lang Lang, code string) (string, string, error) {
 
 	log.Infof("Executing: docker %s\n", command)
 
-	cmd := exec.Command("docker", command...)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", command...)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	// TODO: pull images on init
 	err = cmd.Run()
 
+	if ctx.Err() == context.DeadlineExceeded {
+		return "", "", errors.New("timeout exceeded")
+	}
 	return stdout.String(), stderr.String(), err
 }
 

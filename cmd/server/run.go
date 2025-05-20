@@ -8,12 +8,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const maxMemory = 10 * 1024 * 1024 // 10MB
+const MAX_MEMORY = 10 * 1024 * 1024 // 10MB
+const MAX_PROCESSES = 5
 
-var dockerSemaphore = make(chan struct{}, 5)
+var semaphore = make(chan struct{}, MAX_PROCESSES)
 
 func runHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(maxMemory); err != nil {
+	if err := r.ParseMultipartForm(MAX_MEMORY); err != nil {
 		http.Error(w, "invalid multipart form", http.StatusBadRequest)
 		return
 	}
@@ -23,8 +24,8 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Infof("\nLanguage: %s\nCode:\n%s\n", lang, code)
 
-	dockerSemaphore <- struct{}{}        // Acquire a slot, blocks if 5 are running
-	defer func() { <-dockerSemaphore }() // Release the slot when done
+	semaphore <- struct{}{}
+	defer func() { <-semaphore }()
 
 	stdout, stderr, err := runner.Run(lang, code)
 
@@ -33,7 +34,6 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 		"stdout": stdout,
 		"stderr": stderr,
 	}
-	log.Infof("\nstdout:\n%s\nstderr:\n%s\n", stdout, stderr)
 	if err != nil {
 		log.Errorf("Response error: %s", err)
 		resp["error"] = err.Error()
