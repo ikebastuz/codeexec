@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -46,4 +47,25 @@ func Run(lang Lang, code string) (string, string, error) {
 
 func execFile(fileName string) string {
 	return fmt.Sprintf("%s/%s", WORKDIR, fileName)
+}
+
+func PullAllImages() {
+	var wg sync.WaitGroup
+
+	for _, def := range langDefinition {
+		image := def.image
+		wg.Add(1)
+		go func(img string) {
+			defer wg.Done()
+			log.Infof("Pulling image %s", img)
+			cmd := exec.Command("docker", "pull", img)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				log.Warnf("Failed to pull image %s: %v\nOutput: %s", img, err, string(out))
+			} else {
+				log.Infof("Successfully pulled image %s", img)
+			}
+		}(image)
+	}
+	wg.Wait()
 }

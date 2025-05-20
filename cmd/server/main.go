@@ -1,8 +1,11 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
 	"net/http"
+
+	"codeexec/internal/runner"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // TODO: move to env
@@ -14,6 +17,8 @@ func main() {
 		FullTimestamp: true,
 		ForceColors:   true,
 	})
+
+	runner.PullAllImages()
 
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/run", runHandler)
