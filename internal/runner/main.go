@@ -9,35 +9,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Run(lang Lang, code string, c chan Job) {
+func Run(lang Lang, code string) (string, string, error) {
 	var lg, ok = langDefinition[lang]
 	if !ok {
-		c <- Job{
-			Stdout: "",
-			Stderr: "",
-			Error:  fmt.Errorf("unknown language: %s", lang),
-		}
-		return
+		return "", "", fmt.Errorf("unknown language: %s", lang)
 	}
 
 	// File
 	tmpFile, err := os.CreateTemp("", "tmp-*")
 	if err != nil {
-		c <- Job{
-			Stdout: "",
-			Stderr: "",
-			Error:  fmt.Errorf("failed to create temp file: %s", err),
-		}
-		return
+		return "", "", fmt.Errorf("failed to create temp file: %s", err)
 	}
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 	if _, err := tmpFile.WriteString(code); err != nil {
-		c <- Job{
-			Stdout: "",
-			Stderr: "",
-			Error:  fmt.Errorf("failed to write code to temp file: %s", err),
-		}
+		return "", "", fmt.Errorf("failed to write code to temp file: %s", err)
 	}
 
 	var stdout, stderr bytes.Buffer
@@ -55,11 +41,7 @@ func Run(lang Lang, code string, c chan Job) {
 	// TODO: pull images on init
 	err = cmd.Run()
 
-	c <- Job{
-		Stdout: stdout.String(),
-		Stderr: stderr.String(),
-		Error:  err,
-	}
+	return stdout.String(), stderr.String(), err
 }
 
 func execFile(fileName string) string {

@@ -23,23 +23,20 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Infof("\nLanguage: %s\nCode:\n%s\n", lang, code)
 
-	dockerSemaphore <- struct{}{}
-	c := make(chan runner.Job)
-	go func() {
-		defer func() { <-dockerSemaphore }() // Release the slot when done
-		runner.Run(lang, code, c)
-	}()
-	res := <-c
+	dockerSemaphore <- struct{}{}        // Acquire a slot, blocks if 5 are running
+	defer func() { <-dockerSemaphore }() // Release the slot when done
+
+	stdout, stderr, err := runner.Run(lang, code)
 
 	w.Header().Set("Content-Type", "application/json")
 	resp := map[string]string{
-		"stdout": res.Stdout,
-		"stderr": res.Stderr,
+		"stdout": stdout,
+		"stderr": stderr,
 	}
-	log.Infof("\nstdout:\n%s\nstderr:\n%s\n", res.Stdout, res.Stderr)
-	if res.Error != nil {
-		log.Errorf("Response error: %s", res.Error)
-		resp["error"] = res.Error.Error()
+	log.Infof("\nstdout:\n%s\nstderr:\n%s\n", stdout, stderr)
+	if err != nil {
+		log.Errorf("Response error: %s", err)
+		resp["error"] = err.Error()
 	}
 	json.NewEncoder(w).Encode(resp)
 }
