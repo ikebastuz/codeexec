@@ -9,6 +9,7 @@ import (
 const PROCESS_TIMEOUT = 30
 const MAX_MEMORY = 10 * 1024 * 1024 // 10MB
 const MAX_PROCESSES = 5
+const CHECK_IMAGES_INTERVAL = 10
 
 type Config struct {
 	PORT string

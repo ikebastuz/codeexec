@@ -21,7 +21,7 @@ EOF
 
 for i in {1..10}; do
   (
-    resp=$(curl -s -w "\nRequest $i: HTTP %{http_code} - %{time_total}s\n" --location 'localhost:1450/run' \
+    resp=$(curl -s -w "\nRequest $i: HTTP %{http_code} - %{time_total}s\n" --location 'localhost:1415/run' \
       --form 'language=go' \
       --form "code=< /tmp/code.go")
     echo "$resp"

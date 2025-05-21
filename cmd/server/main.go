@@ -26,6 +26,7 @@ func main() {
 
 	metrics.InitMetrics()
 	runner.PullAllImages()
+	go runner.StartImageMonitor()
 
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/run", runHandler)

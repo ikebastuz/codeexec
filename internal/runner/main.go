@@ -32,7 +32,7 @@ func Run(lang Lang, code string) (string, string, float64, error) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	var command = []string{"run", "--rm", "-v", fmt.Sprintf("%s:%s", tmpFile.Name(), execFile(lg.fileName))}
+	var command = []string{"run", "--rm", "--pull=never", "-v", fmt.Sprintf("%s:%s", tmpFile.Name(), execFile(lg.fileName))}
 	command = append(command, lg.image)
 	command = append(command, lg.command...)
 	command = append(command, execFile(lg.fileName))
@@ -81,4 +81,28 @@ func PullAllImages() {
 		}(image)
 	}
 	wg.Wait()
+}
+
+func StartImageMonitor() {
+	ticker := time.NewTicker(config.CHECK_IMAGES_INTERVAL * time.Minute)
+	defer ticker.Stop()
+	for {
+		log.Infof("Checking docker images...")
+		missing := false
+		for _, def := range LangDefinitions {
+			img := def.image
+			cmd := exec.Command("docker", "image", "inspect", img)
+			if err := cmd.Run(); err != nil {
+				log.Warnf("Image %s not found, will pull all images...", img)
+				missing = true
+				break
+			}
+		}
+		if missing {
+			PullAllImages()
+		} else {
+			log.Infof("All images are in place")
+		}
+		<-ticker.C
+	}
 }
