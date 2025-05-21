@@ -29,7 +29,9 @@
             rows="12"
             class="w-full font-mono border rounded px-3 py-2 text-sm resize-y"
             placeholder="Write your code here..."
+            style="display: none"
           ></textarea>
+          <div id="code-editor" class="border rounded"></div>
         </div>
         <div class="flex justify-center">
           <button
@@ -70,6 +72,15 @@
         ></div>
       </div>
     </div>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js"></script>
     <script>
       window.sampleCodeMap = JSON.parse("{{ .SampleCodeMap }}");
 
@@ -78,13 +89,35 @@
       const runBtn = document.getElementById("run-btn");
       const durationElem = document.getElementById("duration");
 
+      const modeMap = {
+        python: "python",
+        javascript: "javascript",
+        typescript: "javascript",
+        java: "text/x-java",
+        c: "text/x-csrc",
+        cpp: "text/x-c++src",
+        csharp: "text/x-csharp",
+        go: "go",
+        golang: "go",
+      };
+      const codeMirror = CodeMirror(document.getElementById("code-editor"), {
+        value: "",
+        lineNumbers: true,
+        mode: modeMap[languageSelect.value] || "python",
+        theme: "default",
+        indentUnit: 4,
+        tabSize: 4,
+        autofocus: true,
+      });
+
       function setSampleCode() {
         const lang = languageSelect.value;
         if (window.sampleCodeMap[lang]) {
-          codeTextarea.value = window.sampleCodeMap[lang];
+          codeMirror.setValue(window.sampleCodeMap[lang]);
         } else {
-          codeTextarea.value = "";
+          codeMirror.setValue("");
         }
+        codeMirror.setOption("mode", modeMap[lang] || "python");
       }
 
       document
@@ -93,6 +126,8 @@
           e.preventDefault();
           runBtn.disabled = true;
           runBtn.textContent = "Running...";
+          // Set textarea value from CodeMirror before creating FormData
+          codeTextarea.value = codeMirror.getValue();
           const form = e.target;
           const data = new FormData(form);
           const resp = await fetch("/run", {
