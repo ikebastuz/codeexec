@@ -39,7 +39,7 @@ func Run(lang Lang, code string) (string, string, float64, error) {
 
 	log.Infof("Executing: docker %s\n", command)
 
-	ctx, cancel := context.WithTimeout(context.Background(), config.PROCESS_TIMEOUT*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.PROCESS_TIMEOUT)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "docker", command...)
@@ -84,7 +84,7 @@ func PullAllImages() {
 }
 
 func StartImageMonitor() {
-	ticker := time.NewTicker(config.CHECK_IMAGES_INTERVAL * time.Minute)
+	ticker := time.NewTicker(config.CHECK_IMAGES_INTERVAL)
 	defer ticker.Stop()
 	for {
 		log.Infof("Checking docker images...")

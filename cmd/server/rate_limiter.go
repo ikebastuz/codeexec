@@ -1,6 +1,7 @@
 package main
 
 import (
+	"codeexec/internal/config"
 	"codeexec/internal/metrics"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
@@ -17,7 +18,7 @@ func getVisitor(ip string) *rate.Limiter {
 
 	limiter, exists := visitors[ip]
 	if !exists {
-		limiter = rate.NewLimiter(1, 2)
+		limiter = rate.NewLimiter(config.RATE_LIMIT_REQ_S, config.RATE_LIMIT_BURST_S)
 		visitors[ip] = limiter
 	}
 
