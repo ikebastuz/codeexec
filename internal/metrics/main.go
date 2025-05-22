@@ -30,6 +30,14 @@ var (
 		},
 	)
 
+	RateLimitCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "codeexec_rate_limit_counter",
+			Help: "Total number of index page served",
+		},
+		[]string{"ip"},
+	)
+
 	StdErrCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "codeexec_stderr_total",
@@ -52,6 +60,7 @@ func InitMetrics() {
 	prometheus.MustRegister(ExecutionsCounter)
 	prometheus.MustRegister(ExecutionsDuration)
 	prometheus.MustRegister(IndexPageCounter)
+	prometheus.MustRegister(RateLimitCounter)
 	prometheus.MustRegister(StdErrCounter)
 	prometheus.MustRegister(ErrorCounter)
 }

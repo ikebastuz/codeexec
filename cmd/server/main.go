@@ -29,7 +29,7 @@ func main() {
 	go runner.StartImageMonitor()
 
 	http.Handle("/metrics", promhttp.Handler())
-	http.HandleFunc("/run", runHandler)
+	http.HandleFunc("/run", rateLimitMiddleware(runHandler))
 	http.HandleFunc("/", indexHandler)
 
 	log.Infof("Server on %s", config.PORT)
