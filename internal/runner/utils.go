@@ -3,16 +3,14 @@ package runner
 import (
 	"codeexec/internal/config"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
-
-func workDirFile(fileName string) string {
-	return fmt.Sprintf("%s/%s", WORKDIR, fileName)
-}
 
 func PullAllImages() {
 	var wg sync.WaitGroup
@@ -57,4 +55,17 @@ func StartImageMonitor() {
 		}
 		<-ticker.C
 	}
+}
+
+func mkWorkDir(lg LangDefinition, sourceCode string) (string, error) {
+	tmpDir, err := os.MkdirTemp("", "tmp-app-*")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp dir: %w", err)
+	}
+	sourceFilePath := filepath.Join(tmpDir, lg.sourceFileName)
+	if err := os.WriteFile(sourceFilePath, []byte(sourceCode), 0644); err != nil {
+		os.RemoveAll(tmpDir)
+		return "", fmt.Errorf("failed to write code to source file: %w", err)
+	}
+	return tmpDir, nil
 }

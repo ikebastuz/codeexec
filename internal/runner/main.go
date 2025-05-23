@@ -8,27 +8,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func mkWorkDir(lg LangDefinition, sourceCode string) (string, error) {
-	tmpDir, err := os.MkdirTemp("", "tmp-app-*")
-	if err != nil {
-		return "", fmt.Errorf("failed to create temp dir: %w", err)
-	}
-	sourceFilePath := filepath.Join(tmpDir, lg.sourceFileName)
-	if err := os.WriteFile(sourceFilePath, []byte(sourceCode), 0644); err != nil {
-		os.RemoveAll(tmpDir)
-		return "", fmt.Errorf("failed to write code to source file: %w", err)
-	}
-	return tmpDir, nil
-}
-
-func runDockerCommand(command []string, timeout time.Duration) (string, string, error) {
+func runCommand(command []string, timeout time.Duration) (string, string, error) {
 	var stdout, stderr bytes.Buffer
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -78,7 +64,7 @@ func Run(lang Lang, code string) (string, string, float64, float64, error) {
 	var buildDuration float64
 	if lg.buildCommand != nil {
 		start := time.Now()
-		stdout, stderr, err := runDockerCommand(mkCommand(lg, tmpDir, true), config.PROCESS_TIMEOUT)
+		stdout, stderr, err := runCommand(mkCommand(lg, tmpDir, true), config.PROCESS_TIMEOUT)
 		buildDuration = time.Since(start).Seconds()
 		if err != nil {
 			log.Errorf("Failed to build: %s", err)
@@ -87,7 +73,7 @@ func Run(lang Lang, code string) (string, string, float64, float64, error) {
 	}
 
 	start := time.Now()
-	stdout, stderr, err := runDockerCommand(mkCommand(lg, tmpDir, false), config.PROCESS_TIMEOUT)
+	stdout, stderr, err := runCommand(mkCommand(lg, tmpDir, false), config.PROCESS_TIMEOUT)
 	execDuration := time.Since(start).Seconds()
 	if err != nil {
 		log.Errorf("Execution error: %s", err)
