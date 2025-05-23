@@ -47,10 +47,17 @@
         <div class="flex items-center justify-center mb-2">
           <h2 class="text-xl font-semibold text-center mr-3">Output</h2>
           <span
-            id="duration"
-            class="text-xs text-gray-500 bg-gray-200 rounded px-2 py-1"
+            id="build-duration"
+            class="text-xs text-gray-500 bg-gray-200 rounded px-2 py-1 mr-1"
             style="display: none"
-          ></span>
+          >
+          </span>
+          <span
+            id="exec-duration"
+            class="text-xs text-gray-500 bg-gray-200 rounded px-2 py-1"
+            style="display: none; margin-left: 4px"
+          >
+          </span>
         </div>
         <div class="mb-4">
           <label class="block font-medium mb-1 text-green-700">Stdout:</label>
@@ -87,16 +94,14 @@
       const languageSelect = document.getElementById("language");
       const codeTextarea = document.getElementById("code");
       const runBtn = document.getElementById("run-btn");
-      const durationElem = document.getElementById("duration");
+      const execDurationElem = document.getElementById("exec-duration");
+      const buildDurationElem = document.getElementById("build-duration");
 
       const modeMap = {
         python: "python",
         javascript: "javascript",
         typescript: "javascript",
         java: "text/x-java",
-        c: "text/x-csrc",
-        cpp: "text/x-c++src",
-        csharp: "text/x-csharp",
         go: "go",
         golang: "go",
       };
@@ -120,6 +125,16 @@
         codeMirror.setOption("mode", modeMap[lang] || "python");
       }
 
+      function setDuration(element, duration, label) {
+        if (typeof duration === "number" && duration > 0) {
+          element.textContent = `${label}: ${duration.toFixed(2)}s`;
+          element.style.display = "inline-block";
+        } else {
+          element.textContent = "";
+          element.style.display = "none";
+        }
+      }
+
       document
         .getElementById("code-form")
         .addEventListener("submit", async function (e) {
@@ -141,13 +156,9 @@
           document.getElementById("error-section").textContent =
             result.error || "";
 
-          if (typeof result.duration === "number") {
-            durationElem.textContent = `${result.duration.toFixed(2)}s`;
-            durationElem.style.display = "inline-block";
-          } else {
-            durationElem.textContent = "";
-            durationElem.style.display = "none";
-          }
+          setDuration(execDurationElem, result.exec_duration, "Execution");
+          setDuration(buildDurationElem, result.build_duration, "Build");
+
           runBtn.disabled = false;
           runBtn.textContent = "Run";
         });

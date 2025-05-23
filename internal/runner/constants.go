@@ -47,7 +47,8 @@ func main() {
 	},
 	LANG_RUST: {
 		image:          "rust:1.77-alpine",
-		execCommand:    []string{"sh", "-c", "rustc /app/main.rs -o /app/main && /app/main"},
+		buildCommand:   []string{"rustc", "main.rs", "-o", "main"},
+		execCommand:    []string{"./main"},
 		sourceFileName: "main.rs",
 		SampleCode: `fn main() {
     println!("Hello, World!");
@@ -62,7 +63,8 @@ echo "Hello, World!";`,
 	},
 	LANG_JAVA: {
 		image:          "openjdk:21-slim",
-		execCommand:    []string{"sh", "-c", "javac /app/Main.java && java -cp /app Main"},
+		buildCommand:   []string{"javac", "Main.java"},
+		execCommand:    []string{"java", "-cp", "/app", "Main"},
 		sourceFileName: "Main.java",
 		SampleCode: `public class Main {
     public static void main(String[] args) {

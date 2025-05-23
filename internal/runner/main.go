@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -34,6 +35,7 @@ func runDockerCommand(command []string, timeout time.Duration) (string, string, 
 	cmd := exec.CommandContext(ctx, "docker", command...)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+	log.Infof("Running command: %s", strings.Join(command, " "))
 	err := cmd.Run()
 	if ctx.Err() == context.DeadlineExceeded {
 		return stdout.String(), stderr.String(), errors.New("timeout exceeded")
@@ -57,31 +59,34 @@ func mkCommand(lg LangDefinition, tempDir string, isBuild bool) []string {
 	return command
 }
 
-func Run(lang Lang, code string) (string, string, float64, error) {
+func Run(lang Lang, code string) (string, string, float64, float64, error) {
 	lg, ok := LangDefinitions[lang]
 	if !ok {
-		return "", "", 0, fmt.Errorf("unknown language: %s", lang)
+		return "", "", 0, 0, fmt.Errorf("unknown language: %s", lang)
 	}
 
 	tmpDir, err := mkWorkDir(lg, code)
 	if err != nil {
-		return "", "", 0, err
+		return "", "", 0, 0, err
 	}
 	defer os.RemoveAll(tmpDir)
 
+	var buildDuration float64
 	if lg.buildCommand != nil {
+		start := time.Now()
 		stdout, stderr, err := runDockerCommand(mkCommand(lg, tmpDir, true), config.PROCESS_TIMEOUT)
+		buildDuration = time.Since(start).Seconds()
 		if err != nil {
 			log.Errorf("Failed to build: %s", err)
-			return stdout, stderr, 0, err
+			return stdout, stderr, buildDuration, 0, err
 		}
 	}
 
 	start := time.Now()
 	stdout, stderr, err := runDockerCommand(mkCommand(lg, tmpDir, false), config.PROCESS_TIMEOUT)
-	duration := time.Since(start).Seconds()
+	execDuration := time.Since(start).Seconds()
 	if err != nil {
 		log.Errorf("Execution error: %s", err)
 	}
-	return stdout, stderr, duration, err
+	return stdout, stderr, buildDuration, execDuration, err
 }

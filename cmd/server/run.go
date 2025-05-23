@@ -26,16 +26,17 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	semaphore <- struct{}{}
 	defer func() { <-semaphore }()
 
-	stdout, stderr, duration, err := runner.Run(lang, code)
+	stdout, stderr, buildDuration, execDuration, err := runner.Run(lang, code)
 
 	w.Header().Set("Content-Type", "application/json")
 	resp := Response{
-		Stdout:   stdout,
-		Stderr:   stderr,
-		Duration: duration,
+		Stdout:        stdout,
+		Stderr:        stderr,
+		ExecDuration:  execDuration,
+		BuildDuration: buildDuration,
 	}
 	metrics.ExecutionsCounter.WithLabelValues(string(lang)).Inc()
-	metrics.ExecutionsDuration.WithLabelValues(string(lang)).Observe(duration)
+	metrics.ExecutionsDuration.WithLabelValues(string(lang)).Observe(execDuration)
 
 	if stderr != "" {
 		metrics.StdErrCounter.WithLabelValues(string(lang)).Inc()
