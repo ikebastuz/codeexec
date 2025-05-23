@@ -7,7 +7,6 @@ type LangDefinition struct {
 	execCommand    []string
 	buildCommand   []string
 	sourceFileName string
-	targetFileName string
 	SampleCode     string
 }
 

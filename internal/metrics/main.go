@@ -14,13 +14,13 @@ var (
 		[]string{"language"},
 	)
 
-	ExecutionsDuration = prometheus.NewHistogramVec(
+	Duration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "codeexec_execution_duration_seconds",
+			Name:    "codeexec_duration_seconds",
 			Help:    "Execution duration in seconds",
 			Buckets: []float64{1, 3, 10, 30},
 		},
-		[]string{"language"},
+		[]string{"language", "type"},
 	)
 
 	IndexPageCounter = prometheus.NewCounter(
@@ -53,14 +53,23 @@ var (
 		},
 		[]string{"language"},
 	)
+
+	ErrorTypeCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "codeexec_error_type_total",
+			Help: "Total number of errors",
+		},
+		[]string{"message"},
+	)
 )
 
 func InitMetrics() {
 	log.Info("Registering metrics")
 	prometheus.MustRegister(ExecutionsCounter)
-	prometheus.MustRegister(ExecutionsDuration)
+	prometheus.MustRegister(Duration)
 	prometheus.MustRegister(IndexPageCounter)
 	prometheus.MustRegister(RateLimitCounter)
 	prometheus.MustRegister(StdErrCounter)
 	prometheus.MustRegister(ErrorCounter)
+	prometheus.MustRegister(ErrorTypeCounter)
 }

@@ -36,7 +36,10 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 		BuildDuration: buildDuration,
 	}
 	metrics.ExecutionsCounter.WithLabelValues(string(lang)).Inc()
-	metrics.ExecutionsDuration.WithLabelValues(string(lang)).Observe(execDuration)
+	if buildDuration > 0 {
+		metrics.Duration.WithLabelValues(string(lang), "build").Observe(buildDuration)
+	}
+	metrics.Duration.WithLabelValues(string(lang), "exec").Observe(execDuration)
 
 	if stderr != "" {
 		metrics.StdErrCounter.WithLabelValues(string(lang)).Inc()
@@ -44,6 +47,8 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		metrics.ErrorCounter.WithLabelValues(string(lang)).Inc()
+		metrics.ErrorTypeCounter.WithLabelValues(err.Error()).Inc()
+
 		log.Errorf("Response error: %s", err)
 		resp.Error = err.Error()
 	}

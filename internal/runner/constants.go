@@ -18,7 +18,6 @@ var LangDefinitions = map[Lang]LangDefinition{
 		buildCommand:   []string{"go", "build", "-o", "main", "main.go"},
 		execCommand:    []string{"./main"},
 		sourceFileName: "main.go",
-		targetFileName: "main",
 		SampleCode: `package main
 
 import "fmt"

@@ -55,6 +55,10 @@ func mkCommand(lg LangDefinition, tempDir string, isBuild bool) []string {
 		command = append(command, lg.buildCommand...)
 	} else {
 		command = append(command, lg.execCommand...)
+		// TODO: rewrite ugly logic
+		if lg.buildCommand == nil {
+			command = append(command, lg.sourceFileName)
+		}
 	}
 	return command
 }
