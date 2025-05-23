@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -31,12 +32,9 @@ func Run(lang Lang, code string) (string, string, float64, error) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	var command = []string{"run", "--rm", "--pull=never", "-v", fmt.Sprintf("%s:%s", tmpFile.Name(), execFile(lg.fileName))}
-	command = append(command, lg.image)
-	command = append(command, lg.command...)
-	command = append(command, execFile(lg.fileName))
 
-	log.Infof("Executing: docker %s\n", command)
+	command := makeExecCommand(lg, tmpFile.Name())
+	log.Infof("Executing: %s\n", strings.Join(command, " "))
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.PROCESS_TIMEOUT)
 	defer cancel()
@@ -55,4 +53,17 @@ func Run(lang Lang, code string) (string, string, float64, error) {
 		return "", "", duration, errors.New("timeout exceeded")
 	}
 	return stdout.String(), stderr.String(), duration, err
+}
+
+func makeExecCommand(lg LangDefinition, tempFileName string) []string {
+	file := execFile(lg.fileName)
+	var command = []string{
+		"docker",
+		"run", "--rm", "--pull=never",
+		"-v", fmt.Sprintf("%s:%s", tempFileName, file),
+	}
+	command = append(command, lg.image)
+	command = append(command, lg.command...)
+	command = append(command, file)
+	return command
 }
