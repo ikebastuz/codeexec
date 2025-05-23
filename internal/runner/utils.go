@@ -1,11 +1,15 @@
 package runner
 
 import (
+	"bytes"
 	"codeexec/internal/config"
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -68,4 +72,58 @@ func mkWorkDir(lg LangDefinition, sourceCode string) (string, error) {
 		return "", fmt.Errorf("failed to write code to source file: %w", err)
 	}
 	return tmpDir, nil
+}
+
+func runCommand(command []string, timeout time.Duration) (string, string, error) {
+	var stdout, stderr bytes.Buffer
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", command...)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	log.Infof("Running command: %s", strings.Join(command, " "))
+
+	err := cmd.Run()
+	if ctx.Err() == context.DeadlineExceeded {
+		return stdout.String(), stderr.String(), errors.New(ERR_TIMEOUT_EXCEEDED)
+	}
+
+	return stdout.String(), stderr.String(), err
+}
+
+func mkDockerBaseCommand(tempDir string) []string {
+	return []string{
+		"run", "--rm",
+		"--pull=never",
+		"-w", WORKDIR,
+		"-v", fmt.Sprintf("%s:%s", tempDir, WORKDIR),
+	}
+}
+
+func mkBuildCommand(ld LangDefinition, tempDir string) []string {
+	if ld.buildCommand == nil {
+		return nil
+	}
+
+	command := mkDockerBaseCommand(tempDir)
+
+	command = append(command, ld.image)
+	command = append(command, ld.buildCommand...)
+	return command
+}
+
+func mkExecCommand(ld LangDefinition, tempDir string) []string {
+	command := mkDockerBaseCommand(tempDir)
+
+	command = append(command, ld.image)
+	command = append(command, ld.execCommand...)
+
+	if ld.buildCommand == nil {
+		command = append(command, ld.sourceFileName)
+	}
+
+	return command
 }
