@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func execFile(fileName string) string {
+func workDirFile(fileName string) string {
 	return fmt.Sprintf("%s/%s", WORKDIR, fileName)
 }
 

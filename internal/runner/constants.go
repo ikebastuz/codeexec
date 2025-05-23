@@ -15,8 +15,10 @@ const WORKDIR = "/app"
 var LangDefinitions = map[Lang]LangDefinition{
 	LANG_GO: {
 		image:          "golang:1.21-alpine",
-		execCommand:    []string{"sh", "-c", "go build -o /app/main /app/main.go && /app/main"},
+		buildCommand:   []string{"go", "build", "-o", "main", "main.go"},
+		execCommand:    []string{"./main"},
 		sourceFileName: "main.go",
+		targetFileName: "main",
 		SampleCode: `package main
 
 import "fmt"

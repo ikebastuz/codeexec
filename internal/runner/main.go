@@ -8,61 +8,80 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
+	"path/filepath"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
+func mkWorkDir(lg LangDefinition, sourceCode string) (string, error) {
+	tmpDir, err := os.MkdirTemp("", "tmp-app-*")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp dir: %w", err)
+	}
+	sourceFilePath := filepath.Join(tmpDir, lg.sourceFileName)
+	if err := os.WriteFile(sourceFilePath, []byte(sourceCode), 0644); err != nil {
+		os.RemoveAll(tmpDir)
+		return "", fmt.Errorf("failed to write code to source file: %w", err)
+	}
+	return tmpDir, nil
+}
+
+func runDockerCommand(command []string, timeout time.Duration) (string, string, error) {
+	var stdout, stderr bytes.Buffer
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "docker", command...)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if ctx.Err() == context.DeadlineExceeded {
+		return stdout.String(), stderr.String(), errors.New("timeout exceeded")
+	}
+	return stdout.String(), stderr.String(), err
+}
+
+func mkCommand(lg LangDefinition, tempDir string, isBuild bool) []string {
+	command := []string{
+		"run", "--rm",
+		"--pull=never",
+		"-w", WORKDIR,
+		"-v", fmt.Sprintf("%s:%s", tempDir, WORKDIR),
+	}
+	command = append(command, lg.image)
+	if isBuild {
+		command = append(command, lg.buildCommand...)
+	} else {
+		command = append(command, lg.execCommand...)
+	}
+	return command
+}
+
 func Run(lang Lang, code string) (string, string, float64, error) {
-	var lg, ok = LangDefinitions[lang]
+	lg, ok := LangDefinitions[lang]
 	if !ok {
 		return "", "", 0, fmt.Errorf("unknown language: %s", lang)
 	}
 
-	// File
-	tmpFile, err := os.CreateTemp("", "tmp-*")
+	tmpDir, err := mkWorkDir(lg, code)
 	if err != nil {
-		return "", "", 0, fmt.Errorf("failed to create temp file: %s", err)
+		return "", "", 0, err
 	}
-	defer tmpFile.Close()
-	defer os.Remove(tmpFile.Name())
-	if _, err := tmpFile.WriteString(code); err != nil {
-		return "", "", 0, fmt.Errorf("failed to write code to temp file: %s", err)
+	defer os.RemoveAll(tmpDir)
+
+	if lg.buildCommand != nil {
+		stdout, stderr, err := runDockerCommand(mkCommand(lg, tmpDir, true), config.PROCESS_TIMEOUT)
+		if err != nil {
+			log.Errorf("Failed to build: %s", err)
+			return stdout, stderr, 0, err
+		}
 	}
-
-	var stdout, stderr bytes.Buffer
-
-	command := makeExecCommand(lg, tmpFile.Name())
-	log.Infof("Executing: %s\n", strings.Join(command, " "))
-
-	ctx, cancel := context.WithTimeout(context.Background(), config.PROCESS_TIMEOUT)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, "docker", command...)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
 
 	start := time.Now()
-	err = cmd.Run()
-	// TODO: calculate duration only for execution if there is a build step
+	stdout, stderr, err := runDockerCommand(mkCommand(lg, tmpDir, false), config.PROCESS_TIMEOUT)
 	duration := time.Since(start).Seconds()
-
-	if ctx.Err() == context.DeadlineExceeded {
-		log.Errorf("Timeout exceeded: %s", ctx.Err())
-		return "", "", duration, errors.New("timeout exceeded")
+	if err != nil {
+		log.Errorf("Execution error: %s", err)
 	}
-	return stdout.String(), stderr.String(), duration, err
-}
-
-func makeExecCommand(lg LangDefinition, tempFileName string) []string {
-	file := execFile(lg.sourceFileName)
-	var command = []string{
-		"run", "--rm", "--pull=never",
-		"-v", fmt.Sprintf("%s:%s", tempFileName, file),
-	}
-	command = append(command, lg.image)
-	command = append(command, lg.execCommand...)
-	command = append(command, file)
-	return command
+	return stdout, stderr, duration, err
 }

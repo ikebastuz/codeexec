@@ -11,8 +11,10 @@ func TestMakeExecCommand(t *testing.T) {
 		langNode := LangDefinitions["javascript"]
 		tempFileName := "tmpFileName"
 
-		got := makeExecCommand(langNode, tempFileName)
-		want := []string{"run", "--rm", "--pull=never", "-v", "tmpFileName:/app/main.js", "node:20-alpine", "node", "/app/main.js"}
+		got := mkCommand(langNode, tempFileName, false)
+		want := []string{
+			"run", "--rm", "--pull=never", "-w", "/app", "-v", "tmpFileName:/app", "node:20-alpine", "node",
+		}
 
 		assertState(t, got, want)
 	})
