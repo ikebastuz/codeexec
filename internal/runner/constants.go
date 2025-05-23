@@ -11,6 +11,9 @@ const (
 )
 
 const WORKDIR = "/app"
+const (
+	ERR_TIMEOUT_EXCEEDED = "timeout exceeded"
+)
 
 var LangDefinitions = map[Lang]LangDefinition{
 	LANG_GO: {
