@@ -56,9 +56,8 @@ func Run(lang Lang, code string) (string, string, float64, error) {
 }
 
 func makeExecCommand(lg LangDefinition, tempFileName string) []string {
-	file := execFile(lg.fileName)
+	file := execFile(lg.sourceFileName)
 	var command = []string{
-		"docker",
 		"run", "--rm", "--pull=never",
 		"-v", fmt.Sprintf("%s:%s", tempFileName, file),
 	}

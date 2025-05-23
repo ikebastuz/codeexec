@@ -14,9 +14,9 @@ const WORKDIR = "/app"
 
 var LangDefinitions = map[Lang]LangDefinition{
 	LANG_GO: {
-		image:    "golang:1.21-alpine",
-		command:  []string{"sh", "-c", "go build -o /app/main /app/main.go && /app/main"},
-		fileName: "main.go",
+		image:          "golang:1.21-alpine",
+		command:        []string{"sh", "-c", "go build -o /app/main /app/main.go && /app/main"},
+		sourceFileName: "main.go",
 		SampleCode: `package main
 
 import "fmt"
@@ -26,42 +26,42 @@ func main() {
 }`,
 	},
 	LANG_JAVASCRIPT: {
-		image:      "node:20-alpine",
-		command:    []string{"node"},
-		fileName:   "main.js",
-		SampleCode: `console.log("Hello, World!");`,
+		image:          "node:20-alpine",
+		command:        []string{"node"},
+		sourceFileName: "main.js",
+		SampleCode:     `console.log("Hello, World!");`,
 	},
 	LANG_PYTHON: {
-		image:      "python:3.11-alpine",
-		command:    []string{"python3"},
-		fileName:   "main.py",
-		SampleCode: `print("Hello, World!")`,
+		image:          "python:3.11-alpine",
+		command:        []string{"python3"},
+		sourceFileName: "main.py",
+		SampleCode:     `print("Hello, World!")`,
 	},
 	LANG_RUBY: {
-		image:      "ruby:3.3-alpine",
-		command:    []string{"ruby"},
-		fileName:   "main.rb",
-		SampleCode: "puts 'Hello, World!'",
+		image:          "ruby:3.3-alpine",
+		command:        []string{"ruby"},
+		sourceFileName: "main.rb",
+		SampleCode:     "puts 'Hello, World!'",
 	},
 	LANG_RUST: {
-		image:    "rust:1.77-alpine",
-		command:  []string{"sh", "-c", "rustc /app/main.rs -o /app/main && /app/main"},
-		fileName: "main.rs",
+		image:          "rust:1.77-alpine",
+		command:        []string{"sh", "-c", "rustc /app/main.rs -o /app/main && /app/main"},
+		sourceFileName: "main.rs",
 		SampleCode: `fn main() {
     println!("Hello, World!");
 }`,
 	},
 	LANG_PHP: {
-		image:    "php:8.3-cli-alpine",
-		command:  []string{"php"},
-		fileName: "main.php",
+		image:          "php:8.3-cli-alpine",
+		command:        []string{"php"},
+		sourceFileName: "main.php",
 		SampleCode: `<?php
 echo "Hello, World!";`,
 	},
 	LANG_JAVA: {
-		image:    "openjdk:21-slim",
-		command:  []string{"sh", "-c", "javac /app/Main.java && java -cp /app Main"},
-		fileName: "Main.java",
+		image:          "openjdk:21-slim",
+		command:        []string{"sh", "-c", "javac /app/Main.java && java -cp /app Main"},
+		sourceFileName: "Main.java",
 		SampleCode: `public class Main {
     public static void main(String[] args) {
         System.out.println("Hello, World!");

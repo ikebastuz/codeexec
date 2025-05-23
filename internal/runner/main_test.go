@@ -1,8 +1,9 @@
 package runner
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestMakeExecCommand(t *testing.T) {
@@ -11,7 +12,7 @@ func TestMakeExecCommand(t *testing.T) {
 		tempFileName := "tmpFileName"
 
 		got := makeExecCommand(langNode, tempFileName)
-		want := []string{"docker", "run", "--rm", "--pull=never", "-v", "tmpFileName:/app/main.js", "node:20-alpine", "node", "/app/main.js"}
+		want := []string{"run", "--rm", "--pull=never", "-v", "tmpFileName:/app/main.js", "node:20-alpine", "node", "/app/main.js"}
 
 		assertState(t, got, want)
 	})
