@@ -4,7 +4,7 @@ type Lang string
 
 type LangDefinition struct {
 	image          string
-	command        []string
+	execCommand    []string
 	sourceFileName string
 	SampleCode     string
 }

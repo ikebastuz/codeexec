@@ -62,7 +62,7 @@ func makeExecCommand(lg LangDefinition, tempFileName string) []string {
 		"-v", fmt.Sprintf("%s:%s", tempFileName, file),
 	}
 	command = append(command, lg.image)
-	command = append(command, lg.command...)
+	command = append(command, lg.execCommand...)
 	command = append(command, file)
 	return command
 }
