@@ -21,7 +21,7 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	lang := runner.Lang(r.FormValue("language"))
 	code := r.FormValue("code")
 
-	log.Infof("\nLanguage: %s\nCode:\n%s\n", lang, code)
+	// log.Infof("\nLanguage: %s\nCode:\n%s\n", lang, code)
 
 	semaphore <- struct{}{}
 	defer func() { <-semaphore }()

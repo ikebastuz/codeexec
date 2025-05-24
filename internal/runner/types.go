@@ -35,5 +35,5 @@ type FS interface {
 }
 
 type CommandExecutor interface {
-	Run(name string, args ...string) (string, string, error)
+	Run(name string, args ...string) (string, string, float64, error)
 }

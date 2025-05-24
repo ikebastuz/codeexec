@@ -3,7 +3,6 @@ package runner
 import (
 	"codeexec/internal/config"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -31,13 +30,11 @@ func (r *Runner) runWithDeps(fs FS, executor CommandExecutor) Result {
 	defer fs.Cleanup()
 
 	var buildDuration float64
+	var stdout, stderr string
 
 	if ld.buildCommand != nil {
 		buildCommand := mkBuildCommand(ld, tempDir)
-
-		start := time.Now()
-		stdout, stderr, err := executor.Run("docker", buildCommand...)
-		buildDuration = time.Since(start).Seconds()
+		stdout, stderr, buildDuration, err = executor.Run("docker", buildCommand...)
 
 		if err != nil {
 			log.Errorf("Failed to build: %s", err)
@@ -51,10 +48,7 @@ func (r *Runner) runWithDeps(fs FS, executor CommandExecutor) Result {
 	}
 
 	execCommand := mkExecCommand(ld, tempDir)
-
-	start := time.Now()
-	stdout, stderr, err := executor.Run("docker", execCommand...)
-	execDuration := time.Since(start).Seconds()
+	stdout, stderr, execDuration, err := executor.Run("docker", execCommand...)
 
 	result := Result{
 		Stdout:        stdout,
