@@ -1,15 +1,9 @@
 package runner
 
 import (
-	"bytes"
 	"codeexec/internal/config"
-	"context"
-	"errors"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -59,39 +53,6 @@ func StartImageMonitor() {
 		}
 		<-ticker.C
 	}
-}
-
-func mkWorkDir(lg LangDefinition, sourceCode string) (string, error) {
-	tmpDir, err := os.MkdirTemp("", "tmp-app-*")
-	if err != nil {
-		return "", fmt.Errorf("failed to create temp dir: %w", err)
-	}
-	sourceFilePath := filepath.Join(tmpDir, lg.sourceFileName)
-	if err := os.WriteFile(sourceFilePath, []byte(sourceCode), 0644); err != nil {
-		os.RemoveAll(tmpDir)
-		return "", fmt.Errorf("failed to write code to source file: %w", err)
-	}
-	return tmpDir, nil
-}
-
-func runCommand(command []string, timeout time.Duration) (string, string, error) {
-	var stdout, stderr bytes.Buffer
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, "docker", command...)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	log.Infof("Running command: %s", strings.Join(command, " "))
-
-	err := cmd.Run()
-	if ctx.Err() == context.DeadlineExceeded {
-		return stdout.String(), stderr.String(), errors.New(ERR_TIMEOUT_EXCEEDED)
-	}
-
-	return stdout.String(), stderr.String(), err
 }
 
 func mkDockerBaseCommand(tempDir string) []string {

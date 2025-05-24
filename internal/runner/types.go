@@ -24,7 +24,16 @@ type Result struct {
 	Error         string  `json:"error"`
 }
 
+type Runner struct {
+	lang Lang
+	code string
+}
+
 type FS interface {
 	Create(fileName string, sourceCode string) (string, error)
 	Cleanup() error
+}
+
+type CommandExecutor interface {
+	Run(name string, args ...string) (string, string, error)
 }

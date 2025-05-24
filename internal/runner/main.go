@@ -8,21 +8,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Runner struct {
-	lang Lang
-	code string
-}
-
 func NewRunner(lang Lang, code string) *Runner {
 	return &Runner{lang: lang, code: code}
 }
 
 func (r *Runner) Run() Result {
 	fs := &TempDirFS{}
-	return r.RunWithDeps(fs)
+	executor := &CommandExecutorOS{timeout: config.PROCESS_TIMEOUT}
+	return r.runWithDeps(fs, executor)
 }
 
-func (r *Runner) RunWithDeps(fs FS) Result {
+func (r *Runner) runWithDeps(fs FS, executor CommandExecutor) Result {
 	ld, ok := LangDefinitions[r.lang]
 	if !ok {
 		return Result{Error: fmt.Sprintf("unknown language: %s", r.lang)}
@@ -40,7 +36,7 @@ func (r *Runner) RunWithDeps(fs FS) Result {
 		buildCommand := mkBuildCommand(ld, tempDir)
 
 		start := time.Now()
-		stdout, stderr, err := runCommand(buildCommand, config.PROCESS_TIMEOUT)
+		stdout, stderr, err := executor.Run("docker", buildCommand...)
 		buildDuration = time.Since(start).Seconds()
 
 		if err != nil {
@@ -57,7 +53,7 @@ func (r *Runner) RunWithDeps(fs FS) Result {
 	execCommand := mkExecCommand(ld, tempDir)
 
 	start := time.Now()
-	stdout, stderr, err := runCommand(execCommand, config.PROCESS_TIMEOUT)
+	stdout, stderr, err := executor.Run("docker", execCommand...)
 	execDuration := time.Since(start).Seconds()
 
 	result := Result{
