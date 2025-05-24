@@ -23,3 +23,8 @@ type Result struct {
 	BuildDuration float64 `json:"build_duration"`
 	Error         string  `json:"error"`
 }
+
+type FS interface {
+	Create(fileName string, sourceCode string) (string, error)
+	Cleanup() error
+}

@@ -26,7 +26,7 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	semaphore <- struct{}{}
 	defer func() { <-semaphore }()
 
-	result := runner.Run(lang, code)
+	result := runner.NewRunner(lang, code).Run()
 
 	w.Header().Set("Content-Type", "application/json")
 

@@ -3,28 +3,37 @@ package runner
 import (
 	"codeexec/internal/config"
 	"fmt"
-	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func Run(lang Lang, code string) Result {
-	ld, ok := LangDefinitions[lang]
+type Runner struct {
+	lang Lang
+	code string
+}
+
+func NewRunner(lang Lang, code string) *Runner {
+	return &Runner{lang: lang, code: code}
+}
+
+func (r *Runner) Run() Result {
+	fs := &TempDirFS{}
+	return r.RunWithDeps(fs)
+}
+
+func (r *Runner) RunWithDeps(fs FS) Result {
+	ld, ok := LangDefinitions[r.lang]
 	if !ok {
-		return Result{Error: fmt.Sprintf("unknown language: %s", lang)}
+		return Result{Error: fmt.Sprintf("unknown language: %s", r.lang)}
 	}
 
-	tmpDir, err := mkWorkDir(ld, code)
+	tempDir, err := fs.Create(ld.sourceFileName, r.code)
 	if err != nil {
 		return Result{Error: err.Error()}
 	}
-	defer os.RemoveAll(tmpDir)
+	defer fs.Cleanup()
 
-	return RunWithDependencies(ld, tmpDir)
-}
-
-func RunWithDependencies(ld LangDefinition, tempDir string) Result {
 	var buildDuration float64
 
 	if ld.buildCommand != nil {
