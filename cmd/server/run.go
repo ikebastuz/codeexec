@@ -26,31 +26,26 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	semaphore <- struct{}{}
 	defer func() { <-semaphore }()
 
-	stdout, stderr, buildDuration, execDuration, err := runner.Run(lang, code)
+	result := runner.Run(lang, code)
 
 	w.Header().Set("Content-Type", "application/json")
-	resp := Response{
-		Stdout:        stdout,
-		Stderr:        stderr,
-		ExecDuration:  execDuration,
-		BuildDuration: buildDuration,
-	}
-	metrics.ExecutionsCounter.WithLabelValues(string(lang)).Inc()
-	if buildDuration > 0 {
-		metrics.Duration.WithLabelValues(string(lang), "build").Observe(buildDuration)
-	}
-	metrics.Duration.WithLabelValues(string(lang), "exec").Observe(execDuration)
 
-	if stderr != "" {
+	metrics.ExecutionsCounter.WithLabelValues(string(lang)).Inc()
+	if result.BuildDuration > 0 {
+		metrics.Duration.WithLabelValues(string(lang), "build").Observe(result.BuildDuration)
+	}
+	metrics.Duration.WithLabelValues(string(lang), "exec").Observe(result.ExecDuration)
+
+	if result.Stderr != "" {
 		metrics.StdErrCounter.WithLabelValues(string(lang)).Inc()
 	}
 
-	if err != nil {
+	if result.Error != "" {
 		metrics.ErrorCounter.WithLabelValues(string(lang)).Inc()
-		metrics.ErrorTypeCounter.WithLabelValues(err.Error()).Inc()
+		metrics.ErrorTypeCounter.WithLabelValues(result.Error).Inc()
 
-		log.Errorf("Response error: %s", err)
-		resp.Error = err.Error()
+		log.Errorf("Response error: %s", result.Error)
 	}
-	json.NewEncoder(w).Encode(resp)
+
+	json.NewEncoder(w).Encode(result)
 }

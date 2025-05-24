@@ -9,22 +9,26 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Run(lang Lang, code string) (string, string, float64, float64, error) {
+func Run(lang Lang, code string) Result {
 	ld, ok := LangDefinitions[lang]
 	if !ok {
-		return "", "", 0, 0, fmt.Errorf("unknown language: %s", lang)
+		return Result{Error: fmt.Sprintf("unknown language: %s", lang)}
 	}
 
 	tmpDir, err := mkWorkDir(ld, code)
 	if err != nil {
-		return "", "", 0, 0, err
+		return Result{Error: err.Error()}
 	}
 	defer os.RemoveAll(tmpDir)
 
+	return RunWithDependencies(ld, tmpDir)
+}
+
+func RunWithDependencies(ld LangDefinition, tempDir string) Result {
 	var buildDuration float64
 
 	if ld.buildCommand != nil {
-		buildCommand := mkBuildCommand(ld, tmpDir)
+		buildCommand := mkBuildCommand(ld, tempDir)
 
 		start := time.Now()
 		stdout, stderr, err := runCommand(buildCommand, config.PROCESS_TIMEOUT)
@@ -32,18 +36,31 @@ func Run(lang Lang, code string) (string, string, float64, float64, error) {
 
 		if err != nil {
 			log.Errorf("Failed to build: %s", err)
-			return stdout, stderr, buildDuration, 0, err
+			return Result{
+				Stdout:        stdout,
+				Stderr:        stderr,
+				BuildDuration: buildDuration,
+				Error:         err.Error(),
+			}
 		}
 	}
 
-	execCommand := mkExecCommand(ld, tmpDir)
+	execCommand := mkExecCommand(ld, tempDir)
 
 	start := time.Now()
 	stdout, stderr, err := runCommand(execCommand, config.PROCESS_TIMEOUT)
 	execDuration := time.Since(start).Seconds()
 
+	result := Result{
+		Stdout:        stdout,
+		Stderr:        stderr,
+		BuildDuration: buildDuration,
+		ExecDuration:  execDuration,
+	}
+
 	if err != nil {
 		log.Errorf("Execution error: %s", err)
+		result.Error = err.Error()
 	}
-	return stdout, stderr, buildDuration, execDuration, err
+	return result
 }
