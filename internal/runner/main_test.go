@@ -7,17 +7,16 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-var tempDir = "tmpDir"
-var tempDirMount = fmt.Sprintf("%s:%s", tempDir, WORKDIR)
-
 func TestDockerBaseCommand(t *testing.T) {
+	tempDir := t.TempDir()
+
 	t.Run("should create correct base docker command", func(t *testing.T) {
 		got := mkDockerBaseCommand(tempDir)
 		want := []string{
 			"run", "--rm",
 			"--pull=never",
 			"-w", WORKDIR,
-			"-v", tempDirMount,
+			"-v", fmt.Sprintf("%s:%s", tempDir, WORKDIR),
 		}
 
 		assertState(t, got, want)
@@ -25,6 +24,7 @@ func TestDockerBaseCommand(t *testing.T) {
 }
 
 func TestBuildCommand(t *testing.T) {
+	tempDir := t.TempDir()
 	t.Run("should create correct build command for compiled language", func(t *testing.T) {
 		lang := LangDefinitions["go"]
 		got := mkBuildCommand(lang, tempDir)
@@ -46,6 +46,7 @@ func TestBuildCommand(t *testing.T) {
 }
 
 func TestExecCommand(t *testing.T) {
+	tempDir := t.TempDir()
 	t.Run("should create correct exec command for compiled language", func(t *testing.T) {
 		lang := LangDefinitions["go"]
 		got := mkExecCommand(lang, tempDir)
