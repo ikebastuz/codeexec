@@ -10,7 +10,7 @@ import (
 func TestRunWithDeps(t *testing.T) {
 	t.Run("should return error for unknown language", func(t *testing.T) {
 		fs := &TempDirStub{t: t}
-		executor := &CommandExecutorStub{}
+		executor := &CommandExecutorStub{lang: "qwe"}
 		result := NewRunner("qwe", "").runWithDeps(fs, executor)
 
 		assertState(t, result, Result{
@@ -20,6 +20,37 @@ func TestRunWithDeps(t *testing.T) {
 			ExecDuration:  0,
 			Error:         "unknown language: qwe",
 		})
+	})
+
+	t.Run("should create and clean up temp dir", func(t *testing.T) {
+		fs := &TempDirStub{t: t}
+		executor := &CommandExecutorStub{lang: "go"}
+		_ = NewRunner("go", "").runWithDeps(fs, executor)
+
+		assertState(t, fs.createdDir, true)
+		assertState(t, fs.cleanedDir, true)
+	})
+
+	t.Run("should build and run interpreted language", func(t *testing.T) {
+		fs := &TempDirStub{t: t}
+		executor := &CommandExecutorStub{lang: "javascript"}
+		result := NewRunner("javascript", "").runWithDeps(fs, executor)
+
+		assertState(t, result.Stderr, "")
+		assertState(t, result.Error, "")
+		assertState(t, executor.ranBuildCommand, false)
+		assertState(t, executor.ranExecCommand, true)
+	})
+
+	t.Run("should build and run compiled language", func(t *testing.T) {
+		fs := &TempDirStub{t: t}
+		executor := &CommandExecutorStub{lang: "go"}
+		result := NewRunner("go", "").runWithDeps(fs, executor)
+
+		assertState(t, result.Stderr, "")
+		assertState(t, result.Error, "")
+		assertState(t, executor.ranBuildCommand, true)
+		assertState(t, executor.ranExecCommand, true)
 	})
 }
 
@@ -111,8 +142,28 @@ func (t *TempDirStub) Cleanup() error {
 	return nil
 }
 
-type CommandExecutorStub struct{}
+type LangType string
+
+const (
+	LangTypeInterpreted LangType = "interpreted"
+	LangTypeCompiled    LangType = "compiled"
+	LangTypeUnknown     LangType = "unknown"
+)
+
+type CommandExecutorStub struct {
+	lang            Lang
+	ranBuildCommand bool
+	ranExecCommand  bool
+}
 
 func (c *CommandExecutorStub) Run(name string, args ...string) (string, string, float64, error) {
+	ld, _ := LangDefinitions[c.lang]
+
+	if ld.buildCommand != nil {
+		c.ranBuildCommand = true
+	}
+
+	c.ranExecCommand = true
+
 	return "", "", 0, nil
 }
