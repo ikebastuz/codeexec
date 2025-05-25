@@ -11,10 +11,8 @@ func TestRunWithDeps(t *testing.T) {
 	t.Run("should return error for unknown language", func(t *testing.T) {
 		fs := &TempDirStub{t: t}
 		executor := &CommandExecutorStub{}
-		runner := &Runner{
-			lang: "qwe",
-		}
-		result := runner.runWithDeps(fs, executor)
+		result := NewRunner("qwe", "").runWithDeps(fs, executor)
+
 		assertState(t, result, Result{
 			Stdout:        "",
 			Stderr:        "",
