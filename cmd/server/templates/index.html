@@ -7,7 +7,27 @@
   </head>
   <body class="bg-gray-100 min-h-screen flex items-center justify-center">
     <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-2xl">
-      <h1 class="text-3xl font-bold mb-6 text-center">Run Code</h1>
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Run Code</h1>
+        <button
+          id="copy-url-btn"
+          class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors"
+          title="Copy URL with code"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+            <path
+              d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"
+            />
+          </svg>
+          Copy URL
+        </button>
+      </div>
       <form id="code-form" class="space-y-4">
         <div>
           <label for="language" class="block font-medium mb-1">Language:</label>
@@ -115,6 +135,59 @@
         autofocus: true,
       });
 
+      function encodeSource(str) {
+        return btoa(str)
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+      }
+
+      function decodeSource(encoded) {
+        // Add padding back
+        let base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+        while (base64.length % 4) {
+          base64 += "=";
+        }
+        return atob(base64);
+      }
+
+      function updateURL(code, lang) {
+        const url = new URL(window.location.href);
+        if (code) {
+          url.searchParams.set("c", encodeSource(code));
+        } else {
+          url.searchParams.delete("c");
+        }
+        if (lang) {
+          url.searchParams.set("l", lang);
+        } else {
+          url.searchParams.delete("l");
+        }
+        window.history.replaceState({}, "", url);
+      }
+
+      function loadCodeFromURL() {
+        const url = new URL(window.location.href);
+        const encodedCode = url.searchParams.get("c");
+        const lang = url.searchParams.get("l");
+
+        if (lang && modeMap[lang]) {
+          languageSelect.value = lang;
+          codeMirror.setOption("mode", modeMap[lang]);
+        }
+
+        if (encodedCode) {
+          try {
+            const decodedCode = decodeSource(encodedCode);
+            codeMirror.setValue(decodedCode);
+          } catch (e) {
+            console.error("Failed to decode code from URL:", e);
+          }
+        } else {
+          setSampleCode();
+        }
+      }
+
       function setSampleCode() {
         const lang = languageSelect.value;
         if (window.sampleCodeMap[lang]) {
@@ -123,7 +196,21 @@
           codeMirror.setValue("");
         }
         codeMirror.setOption("mode", modeMap[lang] || "python");
+        updateURL(codeMirror.getValue(), lang);
       }
+
+      function updateLanguageMode() {
+        const lang = languageSelect.value;
+        const newCode = window.sampleCodeMap[lang] || "";
+        codeMirror.setValue(newCode);
+        codeMirror.setOption("mode", modeMap[lang] || "python");
+        updateURL(newCode, lang);
+      }
+
+      // Update URL when code changes
+      codeMirror.on("change", function () {
+        updateURL(codeMirror.getValue(), languageSelect.value);
+      });
 
       function setDuration(element, duration, label) {
         if (typeof duration === "number" && duration > 0) {
@@ -141,7 +228,6 @@
           e.preventDefault();
           runBtn.disabled = true;
           runBtn.textContent = "Running...";
-          // Set textarea value from CodeMirror before creating FormData
           codeTextarea.value = codeMirror.getValue();
           const form = e.target;
           const data = new FormData(form);
@@ -163,8 +249,33 @@
           runBtn.textContent = "Run";
         });
 
-      languageSelect.addEventListener("change", setSampleCode);
-      setSampleCode();
+      languageSelect.addEventListener("change", updateLanguageMode);
+      loadCodeFromURL();
+
+      document
+        .getElementById("copy-url-btn")
+        .addEventListener("click", async function () {
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            Copied!
+          `;
+            btn.classList.remove("bg-gray-100", "hover:bg-gray-200");
+            btn.classList.add("bg-green-100", "text-green-700");
+            setTimeout(() => {
+              btn.innerHTML = originalText;
+              btn.classList.remove("bg-green-100", "text-green-700");
+              btn.classList.add("bg-gray-100", "hover:bg-gray-200");
+            }, 2000);
+          } catch (err) {
+            console.error("Failed to copy URL:", err);
+          }
+        });
     </script>
   </body>
 </html>
