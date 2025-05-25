@@ -7,6 +7,24 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+func TestRunWithDeps(t *testing.T) {
+	t.Run("should return error for unknown language", func(t *testing.T) {
+		fs := &TempDirStub{t: t}
+		executor := &CommandExecutorStub{}
+		runner := &Runner{
+			lang: "qwe",
+		}
+		result := runner.runWithDeps(fs, executor)
+		assertState(t, result, Result{
+			Stdout:        "",
+			Stderr:        "",
+			BuildDuration: 0,
+			ExecDuration:  0,
+			Error:         "unknown language: qwe",
+		})
+	})
+}
+
 func TestDockerBaseCommand(t *testing.T) {
 	tempDir := t.TempDir()
 
@@ -76,4 +94,27 @@ func assertState[T any](t testing.TB, got, want T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
+}
+
+type TempDirStub struct {
+	t          *testing.T
+	createdDir bool
+	cleanedDir bool
+}
+
+func (t *TempDirStub) Create(fileName string, sourceCode string) (string, error) {
+	tempDir := t.t.TempDir()
+	t.createdDir = true
+	return tempDir, nil
+}
+
+func (t *TempDirStub) Cleanup() error {
+	t.cleanedDir = true
+	return nil
+}
+
+type CommandExecutorStub struct{}
+
+func (c *CommandExecutorStub) Run(name string, args ...string) (string, string, float64, error) {
+	return "", "", 0, nil
 }
