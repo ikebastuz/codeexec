@@ -236,8 +236,16 @@
             headers: { Accept: "application/json" },
             body: data,
           });
+          if (resp.status === 429) {
+            document.getElementById("stdout").textContent = "";
+            document.getElementById("stderr").textContent = "";
+            document.getElementById("error-section").textContent =
+              "You are being rate-limited. Please try again soon.";
+            runBtn.disabled = false;
+            runBtn.textContent = "Run";
+            return;
+          }
           const result = await resp.json();
-          // TODO: handle error (rate-limit, etc)
           document.getElementById("stdout").textContent = result.stdout || "";
           document.getElementById("stderr").textContent = result.stderr || "";
           document.getElementById("error-section").textContent =
