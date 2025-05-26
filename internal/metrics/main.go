@@ -61,6 +61,14 @@ var (
 		},
 		[]string{"message"},
 	)
+
+	CacheHitCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "codeexec_cache_hit_total",
+			Help: "Total number of cache hits",
+		},
+		[]string{"language"},
+	)
 )
 
 func InitMetrics() {
@@ -72,4 +80,5 @@ func InitMetrics() {
 	prometheus.MustRegister(StdErrCounter)
 	prometheus.MustRegister(ErrorCounter)
 	prometheus.MustRegister(ErrorTypeCounter)
+	prometheus.MustRegister(CacheHitCounter)
 }

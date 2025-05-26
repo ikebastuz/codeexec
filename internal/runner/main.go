@@ -3,6 +3,7 @@ package runner
 import (
 	"codeexec/internal/config"
 	"codeexec/internal/db"
+	"codeexec/internal/metrics"
 	"context"
 	"database/sql"
 	"fmt"
@@ -28,6 +29,7 @@ func (r *Runner) Run() Result {
 	})
 
 	if err == nil {
+		metrics.CacheHitCounter.WithLabelValues(string(r.lang)).Inc()
 		return Result{
 			Stdout:        db.NullStringToString(cached.Stdout),
 			Stderr:        db.NullStringToString(cached.Stderr),
