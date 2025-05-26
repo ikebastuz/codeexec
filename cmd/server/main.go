@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"codeexec/internal/config"
+	"codeexec/internal/db"
 	"codeexec/internal/metrics"
 	"codeexec/internal/runner"
 
@@ -23,6 +24,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to get config: %v", err)
 	}
+
+	database := db.InitDB(config)
+	defer database.Close()
 
 	metrics.InitMetrics()
 	runner.PullAllImages()

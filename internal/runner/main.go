@@ -2,6 +2,9 @@ package runner
 
 import (
 	"codeexec/internal/config"
+	"codeexec/internal/db"
+	"context"
+	"database/sql"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -14,7 +17,41 @@ func NewRunner(lang Lang, code string) *Runner {
 func (r *Runner) Run() Result {
 	fs := &TempDirFS{}
 	executor := &CommandExecutorOS{timeout: config.PROCESS_TIMEOUT}
-	return r.runWithDeps(fs, executor)
+
+	encoded := EncodeSource(r.code)
+	queries := db.GetDB().GetQueries()
+
+	// TODO: check if we can use request context
+	cached, err := queries.GetCodeExecutionResult(context.Background(), db.GetCodeExecutionResultParams{
+		EncodedCode: encoded,
+		Language:    string(r.lang),
+	})
+
+	if err == nil {
+		return Result{
+			Stdout:        db.NullStringToString(cached.Stdout),
+			Stderr:        db.NullStringToString(cached.Stderr),
+			ExecDuration:  db.NullFloatToFloat(cached.ExecDuration),
+			BuildDuration: db.NullFloatToFloat(cached.BuildDuration),
+			Error:         db.NullStringToString(cached.Error),
+		}
+	}
+
+	result := r.runWithDeps(fs, executor)
+
+	// TODO: check if we can use request context
+	queries.InsertCodeExecutionResult(context.Background(), db.InsertCodeExecutionResultParams{
+		Code:          r.code,
+		Language:      string(r.lang),
+		EncodedCode:   encoded,
+		Stdout:        db.ToNullString(result.Stdout),
+		Stderr:        db.ToNullString(result.Stderr),
+		Error:         db.ToNullString(result.Error),
+		BuildDuration: sql.NullFloat64{Float64: result.BuildDuration, Valid: true},
+		ExecDuration:  sql.NullFloat64{Float64: result.ExecDuration, Valid: true},
+	})
+
+	return result
 }
 
 func (r *Runner) runWithDeps(fs FS, executor CommandExecutor) Result {
