@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"encoding/base64"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -87,4 +89,8 @@ func mkExecCommand(ld LangDefinition, tempDir string) []string {
 	}
 
 	return command
+}
+
+func EncodeSource(str string) string {
+	return base64.RawURLEncoding.EncodeToString([]byte(str))
 }

@@ -237,6 +237,7 @@
             body: data,
           });
           const result = await resp.json();
+          // TODO: handle error (rate-limit, etc)
           document.getElementById("stdout").textContent = result.stdout || "";
           document.getElementById("stderr").textContent = result.stderr || "";
           document.getElementById("error-section").textContent =
