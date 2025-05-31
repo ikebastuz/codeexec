@@ -15,43 +15,50 @@ func NewRunner(lang Lang, code string) *Runner {
 	return &Runner{lang: lang, code: code}
 }
 
-func (r *Runner) Run() Result {
+func (r *Runner) Run(ctx context.Context) Result {
 	fs := &TempDirFS{}
-	executor := &CommandExecutorOS{timeout: config.PROCESS_TIMEOUT}
+	executor := &CommandExecutorOS{timeout: config.PROCESS_TIMEOUT, ctx: ctx}
+
+	hasNonDetermenisticKeywords := r.containsNonDetermenisticKeywords()
+	if hasNonDetermenisticKeywords {
+		log.Info("Code has non-determenistic keywoards, skipping caching")
+	}
 
 	encoded := EncodeSource(r.code)
 	queries := db.GetDB().GetQueries()
 
-	// TODO: check if we can use request context
-	cached, err := queries.GetCodeExecutionResult(context.Background(), db.GetCodeExecutionResultParams{
-		EncodedCode: encoded,
-		Language:    string(r.lang),
-	})
+	if !hasNonDetermenisticKeywords {
+		cached, err := queries.GetCodeExecutionResult(ctx, db.GetCodeExecutionResultParams{
+			EncodedCode: encoded,
+			Language:    string(r.lang),
+		})
 
-	if err == nil {
-		metrics.CacheHitCounter.WithLabelValues(string(r.lang)).Inc()
-		return Result{
-			Stdout:        db.NullStringToString(cached.Stdout),
-			Stderr:        db.NullStringToString(cached.Stderr),
-			ExecDuration:  db.NullFloatToFloat(cached.ExecDuration),
-			BuildDuration: db.NullFloatToFloat(cached.BuildDuration),
-			Error:         db.NullStringToString(cached.Error),
+		if err == nil {
+			metrics.CacheHitCounter.WithLabelValues(string(r.lang)).Inc()
+			return Result{
+				Stdout:        db.NullStringToString(cached.Stdout),
+				Stderr:        db.NullStringToString(cached.Stderr),
+				ExecDuration:  db.NullFloatToFloat(cached.ExecDuration),
+				BuildDuration: db.NullFloatToFloat(cached.BuildDuration),
+				Error:         db.NullStringToString(cached.Error),
+			}
 		}
 	}
 
 	result := r.runWithDeps(fs, executor)
 
-	// TODO: check if we can use request context
-	queries.InsertCodeExecutionResult(context.Background(), db.InsertCodeExecutionResultParams{
-		Code:          r.code,
-		Language:      string(r.lang),
-		EncodedCode:   encoded,
-		Stdout:        db.ToNullString(result.Stdout),
-		Stderr:        db.ToNullString(result.Stderr),
-		Error:         db.ToNullString(result.Error),
-		BuildDuration: sql.NullFloat64{Float64: result.BuildDuration, Valid: true},
-		ExecDuration:  sql.NullFloat64{Float64: result.ExecDuration, Valid: true},
-	})
+	if !hasNonDetermenisticKeywords {
+		queries.InsertCodeExecutionResult(ctx, db.InsertCodeExecutionResultParams{
+			Code:          r.code,
+			Language:      string(r.lang),
+			EncodedCode:   encoded,
+			Stdout:        db.ToNullString(result.Stdout),
+			Stderr:        db.ToNullString(result.Stderr),
+			Error:         db.ToNullString(result.Error),
+			BuildDuration: sql.NullFloat64{Float64: result.BuildDuration, Valid: true},
+			ExecDuration:  sql.NullFloat64{Float64: result.ExecDuration, Valid: true},
+		})
+	}
 
 	return result
 }

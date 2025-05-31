@@ -7,35 +7,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"database/sql"
-
 	_ "github.com/lib/pq"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var semaphore = make(chan struct{}, config.MAX_PROCESSES)
-
-func toNullString(s string) sql.NullString {
-	if s == "" {
-		return sql.NullString{Valid: false}
-	}
-	return sql.NullString{String: s, Valid: true}
-}
-
-func nullStringToString(ns sql.NullString) string {
-	if ns.Valid {
-		return ns.String
-	}
-	return ""
-}
-
-func nullFloatToFloat(nf sql.NullFloat64) float64 {
-	if nf.Valid {
-		return nf.Float64
-	}
-	return 0
-}
 
 func runHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(config.MAX_MEMORY); err != nil {
@@ -49,7 +26,7 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	semaphore <- struct{}{}
 	defer func() { <-semaphore }()
 
-	result := runner.NewRunner(lang, code).Run()
+	result := runner.NewRunner(lang, code).Run(r.Context())
 
 	w.Header().Set("Content-Type", "application/json")
 

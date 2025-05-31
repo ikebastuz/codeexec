@@ -13,12 +13,13 @@ import (
 
 type CommandExecutorOS struct {
 	timeout time.Duration
+	ctx     context.Context
 }
 
 func (r *CommandExecutorOS) Run(name string, args ...string) (string, string, float64, error) {
 	var stdout, stderr bytes.Buffer
 
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	ctx, cancel := context.WithTimeout(r.ctx, r.timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, name, args...)

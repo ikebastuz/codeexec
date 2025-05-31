@@ -30,10 +30,11 @@ func main() {
 }`,
 	},
 	LANG_JAVASCRIPT: {
-		image:          "node:20-alpine",
-		execCommand:    []string{"node"},
-		sourceFileName: "main.js",
-		SampleCode:     `console.log("Hello, World!");`,
+		image:                    "node:20-alpine",
+		execCommand:              []string{"node"},
+		sourceFileName:           "main.js",
+		SampleCode:               `console.log("Hello, World!");`,
+		nonDetermenisticKeywords: []string{"random()"},
 	},
 	LANG_PYTHON: {
 		image:          "python:3.11-alpine",
