@@ -69,6 +69,14 @@ var (
 		},
 		[]string{"language"},
 	)
+
+	NonDetermenisticCodeCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "codeexec_nondetermenistic_code_total",
+			Help: "Total number of code with non-determenistic keywords",
+		},
+		[]string{"language"},
+	)
 )
 
 func InitMetrics() {
@@ -81,4 +89,5 @@ func InitMetrics() {
 	prometheus.MustRegister(ErrorCounter)
 	prometheus.MustRegister(ErrorTypeCounter)
 	prometheus.MustRegister(CacheHitCounter)
+	prometheus.MustRegister(NonDetermenisticCodeCounter)
 }

@@ -22,6 +22,7 @@ func (r *Runner) Run(ctx context.Context) Result {
 	hasNonDetermenisticKeywords := r.containsNonDetermenisticKeywords()
 	if hasNonDetermenisticKeywords {
 		log.Info("Code has non-determenistic keywoards, skipping caching")
+		metrics.NonDetermenisticCodeCounter.WithLabelValues(string(r.lang)).Inc()
 	}
 
 	encoded := EncodeSource(r.code)
